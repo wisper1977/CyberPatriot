@@ -2,8 +2,6 @@
 
 Title Tombstone Cyberpatriot Script
 
-GOTO MainMenu
-
 echo Checking if script contains Administrative rights...
 	net sessions
 	if %errorlevel%==0 (
