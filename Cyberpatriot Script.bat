@@ -2,6 +2,8 @@
 
 Title Tombstone Cyberpatriot Script
 
+GOTO MainMenu
+
 echo Checking if script contains Administrative rights...
 	net sessions
 	if %errorlevel%==0 (
@@ -50,22 +52,22 @@ echo Checking if script contains Administrative rights...
 		echo ========User/Group Menu=========
 		echo.	
 		echo Choose An option:
-		echo 1. User Menu		
-		echo 2. Groups Menu
-		echo Q. Quit
+		echo 1. Users (Sub-Menu)		
+		echo 2. Groups (Sub-Menu)
+		echo Q. Back To Main Menu
 		SET INPUT=
 		SET /P INPUT=Please select a number:
 	
 		IF /I '%INPUT%'=='2' goto GroupMenu
 		IF /I '%INPUT%'=='1' goto UserMenu
-		IF /I '%INPUT%'=='Q' goto Quit
+		IF /I '%INPUT%'=='Q' goto MainMenu
 	
 	CLS
 	
 		echo ============INVALID INPUT============
 		echo -------------------------------------
 		echo Please select a number from the User
-		echo Menu [1-2] or select 'Q' to quit.
+		echo Menu [1-2] or select 'Q' to go to Main Menu.
 		echo -------------------------------------
 		echo ======PRESS ANY KEY TO CONTINUE======
 	
@@ -104,7 +106,7 @@ echo Checking if script contains Administrative rights...
 		echo ============INVALID INPUT============
 		echo -------------------------------------
 		echo Please select a number from the User
-		echo Menu [1-6] or select 'Q' to User/Group Menu.
+		echo Menu [1-6] or select 'Q' to go to User/Group Menu.
 		echo -------------------------------------
 		echo ======PRESS ANY KEY TO CONTINUE======
 	
@@ -270,6 +272,22 @@ echo Checking if script contains Administrative rights...
 
 	Goto UserMenu
 
+:AdminGuest
+	CLS
+		SET INPUT=
+		SET /P INPUT=Would you like to Disable the Administrator and Guest Accounts (y/n)?
+	
+		IF /I '%INPUT%'=='y' goto DisableAdminGuest
+		IF /I '%INPUT%'=='n' goto UserMenu
+	
+		:DisableAdminGuest
+			echo Disabling Administrator and Guest User
+			net user administrator /active:no
+			net user Guest /active:no
+			echo Administrator and Guest User Disabled
+	pause
+	goto UserMenu
+
 :GroupMenu
 	CLS
 		ECHO =====Tombstone Cyberpatriot=====
@@ -282,13 +300,17 @@ echo Checking if script contains Administrative rights...
 		echo 1. Add User to group
 		echo 2. List Users of a group
 		echo 3. Remove User from group
+		echo 4. Add Group
+		echo 5. Remove Group
 		echo Q. Back To User/Group Menu
 		SET INPUT=
 		SET /P INPUT=Please select a number:
-	
-		IF /I '%INPUT%'=='3' goto RemGroup
+
+		IF /I '%INPUT%'=='5' goto RemGroup
+		IF /I '%INPUT%'=='4' goto AddGroup	
+		IF /I '%INPUT%'=='3' goto RemUserGroup
 		IF /I '%INPUT%'=='2' goto ListGroupUsers
-		IF /I '%INPUT%'=='1' goto AddGroup
+		IF /I '%INPUT%'=='1' goto AddUserGroup
 		IF /I '%INPUT%'=='Q' goto UserGroupMenu
 	
 	CLS
@@ -296,40 +318,12 @@ echo Checking if script contains Administrative rights...
 		echo ============INVALID INPUT============
 		echo -------------------------------------
 		echo Please select a number from the User
-		echo Menu [1-3] or select 'Q' to User/Group Menu.
+		echo Menu [1-3] or select 'Q' to go to User/Group Menu.
 		echo -------------------------------------
 		echo ======PRESS ANY KEY TO CONTINUE======
 	
 	PAUSE > NUL
 	GOTO GroupMenu
-
-:RemGroup
-	Net LocalGroup
-	CLS
-		setlocal EnableDelayedExpansion
-		echo  Type Below Requirements:
-		echo.
-		:username
-			set /p usr= Type Username:
-			if [!usr!]==[] goto username
-		:group
-			set /p grp= Type Group:
-			if [!grp!]==[] goto group			
-
-		net localgroup %grp% %usr% /delete 
-
-		IF %errorlevel% neq 0 Set Command="Remove Group"
-		IF %errorlevel% neq 0 Set Menu=RemGroup
-		IF %errorlevel% neq 0 GOTO ERROR
-			echo !grp! has been removed.
-
-		SET INPUT=
-		SET /P INPUT=Would you like to remove another group (y/n)?
-	
-		IF /I '%INPUT%'=='y' goto RemGroup
-		IF /I '%INPUT%'=='n' goto GroupMenu
-
-	Goto UserMenu
 
 :ListUserGroup
 	CLS
@@ -350,12 +344,82 @@ echo Checking if script contains Administrative rights...
 		SET INPUT=
 		SET /P INPUT=Would you like to list users of another group (y/n)?
 	
-		IF /I '%INPUT%'=='y' goto ListGroup
+		IF /I '%INPUT%'=='y' goto ListUserGroup
 		IF /I '%INPUT%'=='n' goto GroupMenu
 
-	Goto UserMenu
-
 :AddGroup
+	CLS
+	Net LocalGroup
+		setlocal EnableDelayedExpansion
+		echo  Type Below Requirements:
+		echo.
+		:group
+			set /p grp= Type Group:
+			if [!grp!]==[] goto group			
+
+		net localgroup %grp% /add 
+
+		IF %errorlevel% neq 0 Set Command="Add Group"
+		IF %errorlevel% neq 0 Set Menu=AddGroup
+		IF %errorlevel% neq 0 GOTO ERROR
+			echo !grp! has been removed.
+
+		SET INPUT=
+		SET /P INPUT=Would you like to add another group (y/n)?
+	
+		IF /I '%INPUT%'=='y' goto AddGroup
+		IF /I '%INPUT%'=='n' goto GroupMenu
+
+:RemGroup
+	CLS
+	Net LocalGroup
+		setlocal EnableDelayedExpansion
+		echo  Type Below Requirements:
+		echo.
+		:group
+			set /p grp= Type Group:
+			if [!grp!]==[] goto group			
+
+		net localgroup %grp% /delete 
+
+		IF %errorlevel% neq 0 Set Command="Remove Group"
+		IF %errorlevel% neq 0 Set Menu=RemGroup
+		IF %errorlevel% neq 0 GOTO ERROR
+			echo !grp! has been removed.
+
+		SET INPUT=
+		SET /P INPUT=Would you like to remove another group (y/n)?
+	
+		IF /I '%INPUT%'=='y' goto RemGroup
+		IF /I '%INPUT%'=='n' goto GroupMenu
+
+:RemUserGroup
+	CLS
+	Net LocalGroup
+		setlocal EnableDelayedExpansion
+		echo  Type Below Requirements:
+		echo.
+		:username
+			set /p usr= Type Username:
+			if [!usr!]==[] goto username
+		:group
+			set /p grp= Type Group:
+			if [!grp!]==[] goto group			
+
+		net localgroup %grp% %usr% /delete 
+
+		IF %errorlevel% neq 0 Set Command="Remove User Group"
+		IF %errorlevel% neq 0 Set Menu=RemUserGroup
+		IF %errorlevel% neq 0 GOTO ERROR
+			echo !usr! has been removed from !grp!.
+
+		SET INPUT=
+		SET /P INPUT=Would you like to remove another user from a group (y/n)?
+	
+		IF /I '%INPUT%'=='y' goto RemUserGroup
+		IF /I '%INPUT%'=='n' goto GroupMenu
+
+:AddUserGroup
 	CLS
 	Net LocalGroup
 		setlocal EnableDelayedExpansion
@@ -370,15 +434,15 @@ echo Checking if script contains Administrative rights...
 
 		net localgroup %grp% %usr% /add
 
-		IF %errorlevel% neq 0 Set Command="Add Group"
-		IF %errorlevel% neq 0 Set Menu=AddGroup
+		IF %errorlevel% neq 0 Set Command="Add User Group"
+		IF %errorlevel% neq 0 Set Menu=AddUserGroup
 		IF %errorlevel% neq 0 GOTO ERROR
-			echo !grp! has been added.
+			echo !usr! has been added to !grp!.
 
 		SET INPUT=
-		SET /P INPUT=Would you like to add another group (y/n)?
+		SET /P INPUT=Would you like to add another user to a group (y/n)?
 	
-		IF /I '%INPUT%'=='y' goto AddGroup
+		IF /I '%INPUT%'=='y' goto AddUserGroup
 		IF /I '%INPUT%'=='n' goto GroupMenu
 
 :ProgramMenu
@@ -419,18 +483,18 @@ echo Checking if script contains Administrative rights...
 		echo ============INVALID INPUT============
 		echo -------------------------------------
 		echo Please select a number from the Program
-		echo Menu [1-9] or select 'Q' to quit.
+		echo Menu [1-9] or select 'Q' to go to MainMenu.
 		echo -------------------------------------
 		echo ======PRESS ANY KEY TO CONTINUE======
 			
 	PAUSE > NUL
-	GOTO MainMENU
+	GOTO ProgramMENU
 
 :ListPrograms
 	CLS
 	wmic product get name
 	echo.
-	echo Please not the exact names of the programs you wish to uninstall.
+	echo Please note the exact names of the programs you wish to uninstall.
 		pause
 		
 	GoTo ProgramMenu
@@ -580,27 +644,29 @@ echo Checking if script contains Administrative rights...
 		ECHO =============Instructor=============
 		ECHO ============Security Menu===========	
 		echo Choose An option:
-		echo 1. Import Hardened Security Policies
-		echo 2. Import Original Security Policies
-		echo 3. Turn off Auto Logon
-		echo 4. Disable Remote Desktop
-		echo 5. Set Windows Updates
-		echo 6. Best Practices
-		echo 7. Disable Weak services (Intensive)
-		echo 8. Tools
+		echo 1. Policies (Sub-Menu)
+		echo 2. Turn off Auto Logon
+		echo 3. Disable Remote Desktop
+		echo 4. Set Windows Updates
+		echo 5. Set Network Settings
+		echo 6. Check Windows Features
+		echo 7. Enable Firewall and Set Rules
+		echo 8. Turn UAC to Max
+		echo 9. Tools (Sub-Menu)
 		echo Q. Back To Main Menu
 
 		SET INPUT=
 		SET /P INPUT=Please select a number:
 	
-		If /I '%INPUT%'=='8' goto Tools
-		IF /I '%INPUT%'=='7' goto WeakServices
-		IF /I '%INPUT%'=='6' goto BestPractice
-		IF /I '%INPUT%'=='5' goto Updates
-		IF /I '%INPUT%'=='4' goto RDP
-		IF /I '%INPUT%'=='3' goto Netplwiz
-		IF /I '%INPUT%'=='2' goto OriginalPolicies
-		IF /I '%INPUT%'=='1' goto HardenedPolicies
+		If /I '%INPUT%'=='9' goto ToolsMenu
+		If /I '%INPUT%'=='8' goto UAC
+		IF /I '%INPUT%'=='7' goto Firewall
+		IF /I '%INPUT%'=='6' goto CheckWindowsFeatures
+		IF /I '%INPUT%'=='5' goto BestPractice
+		IF /I '%INPUT%'=='4' goto Updates
+		IF /I '%INPUT%'=='3' goto RDP
+		IF /I '%INPUT%'=='2' goto Netplwiz
+		IF /I '%INPUT%'=='1' goto PoliciesMenu
 		IF /I '%INPUT%'=='Q' goto MainMenu
 	
 	CLS
@@ -608,136 +674,278 @@ echo Checking if script contains Administrative rights...
 		echo ============INVALID INPUT============
 		echo -------------------------------------
 		echo Please select a number from the Security
-		echo Menu [1-8] or select 'Q' to quit.
+		echo Menu [1-9] or select 'Q' to go to MainMenu.
 		echo -------------------------------------
 		echo ======PRESS ANY KEY TO CONTINUE======
 	
 	PAUSE > NUL
-	GOTO MainMENU
+	GOTO SecurityMENU
 
-:BestPractice
+:UAC
 	CLS
-	REM Automation found from all over the interwebs, sources unknown, please open issue.
+		echo Turning UAC to max
+		reg add "HKLM\Software\Microsoft\Windows\CurrentVersion\policies\system" /v ConsentPromptBehaviorAdmin /t REG_DWORD /d 2 /f
+		echo UAC turned to max
+	pause
 	
-	REM Turns on UAC
-		reg ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v EnableLUA /t REG_DWORD /d 1 /f
-		
-	REM Disable Administrator and Guest
-		net user administrator /active:no
-		net user Guest /active:no
+	goto SecurityMenu
 
-	REM Activate Smart Screen
-		REM Internet Explorer
-			REG ADD "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer" /v SmartScreenEnabled /t REG_SZ /d "On"
-			REG ADD "HKCU\Software\Classes\Local Settings\Software\Microsoft\Windows\CurrentVersion\AppContainer\ Storage\microsoft.microsoftedge_8wekyb3d8bbwe\MicrosoftEdge\PhishingFilter" /v EnabledV9 /t REG_DWORD /d 1
-		echo Smart Screen Activated. 
-
-	REM REMove all saved credentials
-		cmdkey.exe /list > "%TEMP%\List.txt"
-		findstr.exe Target "%TEMP%\List.txt" > "%TEMP%\tokensonly.txt"
-		FOR /F "tokens=1,2 delims= " %%G IN (%TEMP%\tokensonly.txt) DO cmdkey.exe /delete:%%H
-		del "%TEMP%\*.*" /s /f /q
-		set SRVC_LIST=(REMoteAccess Telephony tlntsvr p2pimsvc simptcp fax msftpsvc)
-			for %%i in %HITHERE% do net stop %%i
-			for %%i in %HITHERE% sc config %%i start= disabled
-		netsh advfirewall firewall set rule name="REMote Assistance (DCOM-In)" new enable=no >NUL
-		netsh advfirewall firewall set rule name="REMote Assistance (PNRP-In)" new enable=no >NUL
-		netsh advfirewall firewall set rule name="REMote Assistance (RA Server TCP-In)" new enable=no >NUL
-		netsh advfirewall firewall set rule name="REMote Assistance (SSDP TCP-In)" new enable=no >NUL
-		netsh advfirewall firewall set rule name="REMote Assistance (SSDP UDP-In)" new enable=no >NUL
-		netsh advfirewall firewall set rule name="REMote Assistance (TCP-In)" new enable=no >NUL
-		netsh advfirewall firewall set rule name="Telnet Server" new enable=no >NUL
-		netsh advfirewall firewall set rule name="netcat" new enable=no >NUL
-			
-		reg ADD "HKCU\Software\Microsoft\Internet Explorer\Main" /v DoNotTrack /t REG_DWORD /d 1 /f
-		reg ADD "HKCU\Software\Microsoft\Internet Explorer\Download" /v RunInvalidSignatures /t REG_DWORD /d 1 /f
-		reg ADD "HKCU\Software\Microsoft\Internet Explorer\Main\FeatureControl\FEATURE_LOCALMACHINE_LOCKDOWN\Settings" /v LOCALMACHINE_CD_UNLOCK /t REG_DWORD /d 1 /t
-		reg ADD "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v WarnonBadCertRecving /t REG_DWORD /d /1 /f
-		reg ADD "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v WarnOnPostRedirect /t REG_DWORD /d 1 /f
-		reg ADD "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v WarnonZoneCrossing /t REG_DWORD /d 1 /f
-		reg ADD "HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings" /v DisablePasswordCaching /t REG_DWORD /d 1 /f 
-		reg ADD HKCU\SYSTEM\CurrentControlSet\Services\CDROM /v AutoRun /t REG_DWORD /d 1 /f
-		reg ADD HKLM\SYSTEM\CurrentControlSet\Control\CrashControl /v CrashDumpEnabled /t REG_DWORD /d 0 /f
-	
-	REM Services
-		echo Showing you the services...
-		net start
-		echo Now writing services to a file and searching for vulnerable services...
-		net start > servicesstarted.txt
-		echo This is only common services, not nessecarily going to catch 100%
-		REM looks to see if REMote registry is on
-		net start | findstr REMote Registry
-		if %errorlevel%==0 (
-			echo REMote Registry is running!
-			echo Attempting to stop...
-			net stop REMoteRegistry
-			sc config REMoteRegistry start=disabled
-			if %errorlevel%==1 echo Stop failed... sorry...
-		) else ( 
-			echo REMote Registry is already indicating stopped.
-		)
-	
-	REM Clean DNS
-		echo Cleaning out the DNS cache...
-		ipconfig /flushdns
-		echo Writing over the hosts file...
-		attrib -r -s C:\WINDOWS\system32\drivers\etc\hosts
-		echo > C:\Windows\System32\drivers\etc\hosts
-		if %errorlevel%==1 echo There was an error in writing to the hosts file (not running this as Admin probably)
-	Pause
-	
-	Goto SecurityMenu
-	
 :Netplwiz
 	CLS
-	REM Turn off Autologon
+		echo Turn off Autologon
+		echo.
 		REG ADD "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AutoAdminLogon /t REG_SZ /d 0 /f
 		echo Autologin turned off, please restart machine
 	Pause
 	
 	GoTo SecurityMenu
-				
+
 :RDP
 	CLS
-	REM Turns off RDP
+		echo Turning off RDP
 		reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server" /v fDenyTSConnections /t REG_DWORD /d 1 /f
 		REG ADD "HKLM\SYSTEM\CurrentControlSet\Control\REMote Assistance" /v fAllowToGetHelp /t REG_DWORD /d 0 /f
 		reg add "HKLM\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp" /v UserAuthentication /t REG_DWORD /d 0 /f
 
-	REM Failsafe
-		if %errorlevel%==1 netsh advfirewall firewall set service type = REMotedesktop mode = disable
+		REM Failsafe
+		if %errorlevel%==1 netsh advfirewall firewall set service type = Remotedesktop mode = disable
 		
-	echo REMote Assistance And REMote Desktop are disabled
+		echo Remote Assistance And Remote Desktop are disabled
 	pause
 
-	GOTO SecurityMENU
-			
+	GOTO SecurityMenu
+
 :Updates
 	CLS	
-	REM Windows auomatic updates
+		echo Windows auomatic updates
 		reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update" /v AUOptions /t REG_DWORD /d 3 /f
 		net start wuauserc
 		net start bits
 		net start dosvc
-	echo Automatic Updates Set
+		echo Automatic Updates Set
 	pause
 	
 	GOTO SecurityMenu
-				
+
+:CheckWindowsFeatures
+	CLS
+		echo Checking Windows Features
+		echo.
+
+		echo Disabling Telnet Client\Server
+		dism /online /disable-feature /featurename:TelnetClient
+		dism /online /disable-feature /featurename:TelnetServer
+		echo Telnet Client\Server Disabled
+		echo.
+
+		echo Disabling SNMP
+		dism /online /disable-feature /featurename:SNMP-SC
+		echo SNMP Disabled
+		echo.
+
+		echo Disabling RIP Listener
+		dism /online /disable-feature /featurename:RipListener
+		echo RIP Listner Disabled
+		echo.
+
+		echo Disabling Client for NFS
+		dism /online /disable-feature /featurename:ClientForNFS-Infrastructure
+		echo Telnet Client for NFS Disabled
+		echo.
+
+		echo Disabling Internet Information Services (IIS)
+		dism /online /disable-feature /featurename:IIS-WebServer
+		dism /online /disable-feature /featurename:IIS-WebServerRole
+		dism /online /disable-feature /featurename:IIS-CommonHttpFeatures
+		dism /online /disable-feature /featurename:IIS-DefaultDocument
+		dism /online /disable-feature /featurename:IIS-DirectoryBrowsing
+		dism /online /disable-feature /featurename:IIS-HttpErrors
+		dism /online /disable-feature /featurename:IIS-HttpRedirect
+		dism /online /disable-feature /featurename:IIS-StaticContent
+		dism /online /disable-feature /featurename:IIS-HealthAndDiagnostics
+		dism /online /disable-feature /featurename:IIS-HttpLogging
+		dism /online /disable-feature /featurename:IIS-LoggingLibraries
+		dism /online /disable-feature /featurename:IIS-RequestMonitor
+		dism /online /disable-feature /featurename:IIS-HttpTracing
+		dism /online /disable-feature /featurename:IIS-CustomLogging
+		dism /online /disable-feature /featurename:IIS-ODBCLogging
+		dism /online /disable-feature /featurename:IIS-Security
+		dism /online /disable-feature /featurename:IIS-BasicAuthentication
+		dism /online /disable-feature /featurename:IIS-WindowsAuthentication
+		dism /online /disable-feature /featurename:IIS-DigestAuthentication
+		dism /online /disable-feature /featurename:IIS-ClientCertificateMappingAuthentication
+		dism /online /disable-feature /featurename:IIS-IISCertificateMappingAuthentication
+		dism /online /disable-feature /featurename:IIS-URLAuthorization
+		dism /online /disable-feature /featurename:IIS-RequestFiltering
+		dism /online /disable-feature /featurename:IIS-IPSecurity
+		dism /online /disable-feature /featurename:IIS-Performance
+		dism /online /disable-feature /featurename:IIS-HttpCompressionStatic
+		dism /online /disable-feature /featurename:IIS-HttpCompressionDynamic
+		dism /online /disable-feature /featurename:IIS-WebServerManagementTools
+		dism /online /disable-feature /featurename:IIS-ManagementConsole
+		dism /online /disable-feature /featurename:IIS-ManagementScriptingTools
+		dism /online /disable-feature /featurename:IIS-ManagementService
+		dism /online /disable-feature /featurename:IIS-IIS6ManagementCompatibility
+		echo Internet Information Services (IIS) Disabled
+		echo.
+
+	pause
+	goto SecurityMenu
+
+:Firewall
+	CLS
+		echo Enabling firewall
+		netsh advfirewall set allprofiles state on
+		echo Firewall Enabled
+		echo.
+
+		echo Inbound=disable MS Edge
+		netsh advfirewall firewall add rule name="Block MS Edge" dir=in action=block program="%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
+		echo MS Edge Disabled
+		echo.
+
+		echo Inbound=disable Search
+		netsh advfirewall firewall add rule name="Block Search" dir=in action=block program="%ProgramFiles(x86)%\Windows Kits\10\Windows Performance Toolkit\SearchUI.exe"
+		echo Search Disabled
+		echo.
+
+		echo Inbound=disable MSN Money
+		netsh advfirewall firewall add rule name="Block MSN Money" dir=in action=block program="%ProgramFiles(x86)%\Windows Live\Finance\Finance.exe"
+		echo MSN Money Disabled
+		echo.
+
+		echo Inbound=disable MSN Sports
+		netsh advfirewall firewall add rule name="Block MSN Sports" dir=in action=block program="%ProgramFiles(x86)%\Windows Live\Sports\Sports.exe"
+		echo MSN Sports Disabled
+		echo.
+
+		echo Inbound=disable MSN News
+		netsh advfirewall firewall add rule name="Block MSN News" dir=in action=block program="%ProgramFiles(x86)%\Windows Live\News\News.exe"
+		echo MSN News Disabled
+		echo.
+
+		echo Disable port 1900 UPnP
+		reg add "HKLM\Software\Microsoft\DirectplayNATHelp\DPNHUPnP" /v "UPnPMode" /t REG_DWORD /d 2 /f
+		echo port 1900 UPnP Disabled
+		echo.
+
+	pause
+
+	goto SecurityMenu
+
+:Network
+	CLS
+		rem Disable Client for MS Networks
+		reg add "HKLM\SYSTEM\CurrentControlSet\Services\NetBT\Parameters" /v "TransportBindName" /t REG_SZ /d " " /f
+
+		rem Disable File and Printer Sharing for Microsoft Networks
+		reg add "HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters" /v "AutoShareServer" /t REG_DWORD /d 0 /f
+
+		rem Disable QoS
+		reg add "HKLM\SYSTEM\CurrentControlSet\Services\QoS" /v "Start" /t REG_DWORD /d 4 /f
+
+		rem Disable Microsoft Network Adapter Multiplexor Protocol
+		reg add "HKLM\SYSTEM\CurrentControlSet\Services\Netman" /v "Start" /t REG_DWORD /d 4 /f
+
+		rem Disable Microsoft LLDP Protocol Driver
+		reg add "HKLM\SYSTEM\CurrentControlSet\Services\lltdio" /v "Start" /t REG_DWORD /d 4 /f
+
+		rem Disable Link Layer Topology Discovery Mapper IO Driver
+		reg add "HKLM\SYSTEM\CurrentControlSet\Services\lltdsvc" /v "Start" /t REG_DWORD /d 4 /f
+
+		rem Disable Link Layer Topology Discovery Responder
+		reg add "HKLM\SYSTEM\CurrentControlSet\Services\Tcpip6" /v "DisabledComponents" /t REG_DWORD /d 0xffffffff /f
+
+		rem Disable Internet Protocol version 6
+		reg add "HKLM\SYSTEM\CurrentControlSet\Services\TCPIP6" /v "Start" /t REG_DWORD /d 4 /f
+
+		rem 'WINS' tab, select 'Disable NETBIOS over TCP/IP'
+		reg add "HKLM\SYSTEM\CurrentControlSet\Services\NetBT\Parameters" /v "TransportBindName" /t REG_SZ /d " " /f
+
+		rem Use SmartScreen online services: ON
+		reg add "HKCU\Software\Microsoft\Windows\CurrentVersion\AppHost" /v "EnableWebContentEvaluation" /t REG_DWORD /d 1 /f
+
+		rem Automatically connect to suggested open hotspots: OFF
+		reg add "HKLM\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config" /v "AutoConnectAllowedOEM" /t REG_DWORD /d 0 /f
+
+		rem Automatically connect to hotspots temporarily to see if paid network services are available: OFF
+		reg add "HKLM\SOFTWARE\Microsoft\WcmSvc\wifinetworkmanager\config" /v "AutoConnectAllowed" /t REG_DWORD /d 0 /f
+
+		echo Network settings changed
+		echo.
+	pause
+
+	goto SecurityMenu
+
+:PoliciesMenu
+	CLS
+		ECHO =======Tombstone Cyberpatriot=======
+		ECHO =============Instructor=============
+		ECHO =========Security Policies Menu========	
+		echo Choose An option:
+		echo 1. Export Local Security Policies
+		echo 2. Import Original Policies
+		echo 3. Import Hardened Policies
+		echo 4. Set Password Policies
+		echo 5. Set Lockout Policies
+		echo 6. Set Audit Policies
+		echo 7. Set Security Options
+		echo Q. Back To Security Menu
+
+		SET INPUT=
+		SET /P INPUT=Please select a number:
+
+		IF /I '%INPUT%'=='6' goto secOpt
+		IF /I '%INPUT%'=='6' goto audit
+		IF /I '%INPUT%'=='5' goto lockout
+		IF /I '%INPUT%'=='4' goto passwdPol
+		If /I '%INPUT%'=='3' goto HardenedPolicies
+		IF /I '%INPUT%'=='2' goto OriginalPolicies
+		If /I '%INPUT%'=='1' goto ExportPolicies
+		IF /I '%INPUT%'=='Q' goto Quit
+	
+	CLS
+	
+		echo ============INVALID INPUT============
+		echo -------------------------------------
+		echo Please select a number from the Tool
+		echo Menu [1-2] or select 'Q' to go to Security Menu.
+		echo -------------------------------------
+		echo ======PRESS ANY KEY TO CONTINUE======
+	
+	PAUSE > NUL
+	GOTO SecurityMen
+
+:ExportPolicies
+	CLS
+	REM Secuirty Policies
+	IF NOT EXIST "%UserProfile%\Downloads\Data\NUL" mkdir "%UserProfile%\Downloads\Data"
+	
+	setlocal EnableDelayedExpansion
+		echo  Exporting Security Policies to Downloads Folder
+		echo.
+		
+		secedit.exe /export /cfg %UserProfile%\Downloads\Data\originalsecpol.inf
+
+		echo Security Policies exported to Downloads Folder
+		echo.
+	pause
+
+	GOTO PoliciesMenu
+
 :OriginalPolicies
 	CLS
 	REM Secuirty Policies
 		setlocal EnableDelayedExpansion
-		echo  Type Below RequiREMents:
+		echo  Make sure Original Settings are in Downloads folder.
 		echo.
-		:directory
-			set /p dir= Type directory to originalsecpol.inf:
-			if [!dir!]==[] goto directory
-		
-		secedit /configure /db %temp%\temp.sdb /cfg %dir%\originalsecpol.inf
+	
+		secedit /configure /db %temp%\temp.sdb /cfg %UserProfile%\Downloads\Data\originalsecpol.inf
+		echo Original Settings Imported from Downloads
+		echo.
 	pause
 
-	GOTO SecurityMenu
+	GOTO PoliciesMenu
 
 :HardenedPolicies
 	CLS	
@@ -752,67 +960,162 @@ echo Checking if script contains Administrative rights...
 		secedit /configure /db %temp%\temp.sdb /cfg %dir%\securitysettings.inf
 	pause
 
-	GOTO SecurityMenu
-		
-:WeakServices
+	GOTO PoliciesMenu
+
+:passwdPol
 	CLS
-	REM REMoving good ol' insecure stuff
-	echo "DISABLING WEAK SERVICES"
-		dism /online /disable-feature /featurename:TelnetClient
-		dism /online /disable-feature /featurename:TelnetServer
-		dism /online /disable-feature /featurename:IIS-FTPServer
-		dism /online /disable-feature /featurename:IIS-FTPSvc
-		dism /online /disable-feature /featurename:IIS-FTPExtensibility
-		dism /online /disable-feature /featurename:IIS-WebServerRole
-		dism /online /disable-feature /featurename:IIS-WebServer
-		dism /online /disable-feature /featurename:IIS-CommonHttpFeatures
-		dism /online /disable-feature /featurename:IIS-HttpErrors
-		dism /online /disable-feature /featurename:IIS-HttpRedirect
-		dism /online /disable-feature /featurename:IIS-ApplicationDevelopment
-		dism /online /disable-feature /featurename:IIS-NetFxExtensibility
-		dism /online /disable-feature /featurename:IIS-NetFxExtensibility45
-		dism /online /disable-feature /featurename:IIS-HealthAndDiagnostics
-		dism /online /disable-feature /featurename:IIS-HttpLogging
-		dism /online /disable-feature /featurename:IIS-LoggingLibraries
-		dism /online /disable-feature /featurename:IIS-RequestMonitor
-		dism /online /disable-feature /featurename:IIS-HttpTracing
-		dism /online /disable-feature /featurename:IIS-Security
-		dism /online /disable-feature /featurename:IIS-URLAuthorization
-		dism /online /disable-feature /featurename:IIS-RequestFiltering
-		dism /online /disable-feature /featurename:IIS-IPSecurity
-		dism /online /disable-feature /featurename:IIS-Performance
-		dism /online /disable-feature /featurename:IIS-HttpCompressionDynamic
-		dism /online /disable-feature /featurename:IIS-WebServerManagementTools
-		dism /online /disable-feature /featurename:IIS-ManagementScriptingTools
-		dism /online /disable-feature /featurename:IIS-IIS6ManagementCompatibility
-		dism /online /disable-feature /featurename:IIS-Metabase
-		dism /online /disable-feature /featurename:IIS-HostableWebCore
-		dism /online /disable-feature /featurename:IIS-StaticContent
-		dism /online /disable-feature /featurename:IIS-DefaultDocument
-		dism /online /disable-feature /featurename:IIS-DirectoryBrowsing
-		dism /online /disable-feature /featurename:IIS-WebDAV
-		dism /online /disable-feature /featurename:IIS-WebSockets
-		dism /online /disable-feature /featurename:IIS-ApplicationInit
-		dism /online /disable-feature /featurename:IIS-ASPNET
-		dism /online /disable-feature /featurename:IIS-ASPNET45
-		dism /online /disable-feature /featurename:IIS-ASP
-		dism /online /disable-feature /featurename:IIS-CGI
-		dism /online /disable-feature /featurename:IIS-ISAPIExtensions
-		dism /online /disable-feature /featurename:IIS-ISAPIFilter
-		dism /online /disable-feature /featurename:IIS-ServerSideIncludes
-		dism /online /disable-feature /featurename:IIS-CustomLogging
-		dism /online /disable-feature /featurename:IIS-BasicAuthentication
-		dism /online /disable-feature /featurename:IIS-HttpCompressionStatic
-		dism /online /disable-feature /featurename:IIS-ManagementConsole
-		dism /online /disable-feature /featurename:IIS-ManagementService
-		dism /online /disable-feature /featurename:IIS-WMICompatibility
-		dism /online /disable-feature /featurename:IIS-LegacyScripts
-		dism /online /disable-feature /featurename:IIS-LegacySnapIn
-		dism /online /disable-feature /featurename:TFTP
-	Pause
+		rem Sets the password policy
+		rem Set complexity requirments
+		echo Setting pasword policies
+		net accounts /minpwlen:8
+		net accounts /maxpwage:60
+		net accounts /minpwage:10
+		net accounts /uniquepw:3
+		echo.
+		echo Password Policies set
+	pause
+	goto PoliciesMenu
 	
-	GoTo SecurityMenu
-:Tools
+:lockout
+	CLS
+		rem Sets the lockout policy
+		echo Setting the lockout policy
+		net accounts /lockoutduration:30
+		net accounts /lockoutthreshold:3
+		net accounts /lockoutwindow:30
+		echo.
+		echo Account Lockout Policies set
+	pause
+	goto PoliciesMenu
+
+:audit
+	CLS
+		echo Auditing the maching now
+		auditpol /set /category:* /success:enable
+		auditpol /set /category:* /failure:enable
+		echo.
+		echo Audit Policies set
+	pause
+	goto PoliciesMenu
+
+:secOpt
+	CLS
+		echo Changing security options now.
+
+		rem Restrict CD ROM drive
+		reg ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AllocateCDRoms /t REG_DWORD /d 1 /f
+
+		rem Automatic Admin logon
+		reg ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AutoAdminLogon /t REG_DWORD /d 0 /f
+	
+		rem Logon message text
+		set /p body=Please enter logon text: 
+			reg ADD "HKLM\SYSTEM\microsoft\Windwos\CurrentVersion\Policies\System\legalnoticetext" /v LegalNoticeText /t REG_SZ /d "%body%"
+	
+		rem Logon message title bar
+		set /p subject=Please enter the title of the message: 
+			reg ADD "HKLM\SYSTEM\microsoft\Windwos\CurrentVersion\Policies\System\legalnoticecaption" /v LegalNoticeCaption /t REG_SZ /d "%subject%"
+	
+		rem Wipe page file from shutdown
+		reg ADD "HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management" /v ClearPageFileAtShutdown /t REG_DWORD /d 1 /f
+	
+		rem Disallow remote access to floppie disks
+		reg ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" /v AllocateFloppies /t REG_DWORD /d 1 /f
+	
+		rem Prevent print driver installs 
+		reg ADD "HKLM\SYSTEM\CurrentControlSet\Control\Print\Providers\LanMan Print Services\Servers" /v AddPrinterDrivers /t REG_DWORD /d 1 /f
+	
+		rem Limit local account use of blank passwords to console
+		reg ADD "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v LimitBlankPasswordUse /t REG_DWORD /d 1 /f
+	
+		rem Auditing access of Global System Objects
+		reg ADD "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v auditbaseobjects /t REG_DWORD /d 1 /f
+	
+		rem Auditing Backup and Restore
+		reg ADD "HKLM\SYSTEM\CurrentControlSet\Control\Lsa" /v fullprivilegeauditing /t REG_DWORD /d 1 /f
+	
+		rem Do not display last user on logon
+		reg ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v dontdisplaylastusername /t REG_DWORD /d 1 /f
+	
+		rem UAC setting (Prompt on Secure Desktop)
+		reg ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v PromptOnSecureDesktop /t REG_DWORD /d 1 /f
+	
+		rem Enable Installer Detection
+		reg ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v EnableInstallerDetection /t REG_DWORD /d 1 /f
+	
+		rem Undock without logon
+		reg ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v undockwithoutlogon /t REG_DWORD /d 0 /f
+	
+		rem Maximum Machine Password Age
+		reg ADD HKLM\SYSTEM\CurrentControlSet\services\Netlogon\Parameters /v MaximumPasswordAge /t REG_DWORD /d 15 /f
+	
+		rem Disable machine account password changes
+		reg ADD HKLM\SYSTEM\CurrentControlSet\services\Netlogon\Parameters /v DisablePasswordChange /t REG_DWORD /d 1 /f
+	
+		rem Require Strong Session Key
+		reg ADD HKLM\SYSTEM\CurrentControlSet\services\Netlogon\Parameters /v RequireStrongKey /t REG_DWORD /d 1 /f
+	
+		rem Require Sign/Seal
+		reg ADD HKLM\SYSTEM\CurrentControlSet\services\Netlogon\Parameters /v RequireSignOrSeal /t REG_DWORD /d 1 /f
+	
+		rem Sign Channel
+		reg ADD HKLM\SYSTEM\CurrentControlSet\services\Netlogon\Parameters /v SignSecureChannel /t REG_DWORD /d 1 /f
+	
+		rem Seal Channel
+		reg ADD HKLM\SYSTEM\CurrentControlSet\services\Netlogon\Parameters /v SealSecureChannel /t REG_DWORD /d 1 /f
+	
+		rem Don't disable CTRL+ALT+DEL even though it serves no purpose
+		reg ADD HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System /v DisableCAD /t REG_DWORD /d 0 /f 
+	
+		rem Restrict Anonymous Enumeration #1
+		reg ADD HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v restrictanonymous /t REG_DWORD /d 1 /f 
+	
+		rem Restrict Anonymous Enumeration #2
+		reg ADD HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v restrictanonymoussam /t REG_DWORD /d 1 /f 
+	
+		rem Idle Time Limit - 45 mins
+		reg ADD HKLM\SYSTEM\CurrentControlSet\services\LanmanServer\Parameters /v autodisconnect /t REG_DWORD /d 45 /f 
+	
+		rem Require Security Signature - Disabled pursuant to checklist
+		reg ADD HKLM\SYSTEM\CurrentControlSet\services\LanmanServer\Parameters /v enablesecuritysignature /t REG_DWORD /d 0 /f 
+	
+		rem Enable Security Signature - Disabled pursuant to checklist
+		reg ADD HKLM\SYSTEM\CurrentControlSet\services\LanmanServer\Parameters /v requiresecuritysignature /t REG_DWORD /d 0 /f 
+	
+		rem Disable Domain Credential Storage
+		reg ADD HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v disabledomaincreds /t REG_DWORD /d 1 /f 
+	
+		rem Don't Give Anons Everyone Permissions
+		reg ADD HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v everyoneincludesanonymous /t REG_DWORD /d 0 /f 
+	
+		rem SMB Passwords unencrypted to third party
+		reg ADD HKLM\SYSTEM\CurrentControlSet\services\LanmanWorkstation\Parameters /v EnablePlainTextPassword /t REG_DWORD /d 0 /f
+	
+		rem Null Session Pipes Cleared
+		reg ADD HKLM\SYSTEM\CurrentControlSet\services\LanmanServer\Parameters /v NullSessionPipes /t REG_MULTI_SZ /d "" /f
+	
+		rem remotely accessible registry paths cleared
+		reg ADD HKLM\SYSTEM\CurrentControlSet\Control\SecurePipeServers\winreg\AllowedExactPaths /v Machine /t REG_MULTI_SZ /d "" /f
+	
+		rem remotely accessible registry paths and sub-paths cleared
+		reg ADD HKLM\SYSTEM\CurrentControlSet\Control\SecurePipeServers\winreg\AllowedPaths /v Machine /t REG_MULTI_SZ /d "" /f
+	
+		rem Restict anonymous access to named pipes and shares
+		reg ADD HKLM\SYSTEM\CurrentControlSet\services\LanmanServer\Parameters /v NullSessionShares /t REG_MULTI_SZ /d "" /f
+	
+		rem Allow to use Machine ID for NTLM
+		reg ADD HKLM\SYSTEM\CurrentControlSet\Control\Lsa /v UseMachineId /t REG_DWORD /d 0 /f
+
+		rem Enables DEP
+		bcdedit.exe /set {current} nx AlwaysOn
+
+		echo.
+		echo Security Options Changed.
+
+	pause
+	goto PoliciesMenu
+
+:ToolsMenu
 	CLS
 		ECHO =======Tombstone Cyberpatriot=======
 		ECHO =============Instructor=============
@@ -820,11 +1123,13 @@ echo Checking if script contains Administrative rights...
 		echo Choose An option:
 		echo 1. Integrity Scan
 		echo 2. Possible Pentrations
+		echo 3. Remove Disallowed Media Files
 		echo Q. Back To Security Menu
 
 		SET INPUT=
 		SET /P INPUT=Please select a number:
-	
+
+		IF /I '%INPUT%'=='3' goto DisallowedMediaFiles
 		IF /I '%INPUT%'=='2' goto PossiblePenetrations
 		If /I '%INPUT%'=='1' goto IntegrityScan
 		IF /I '%INPUT%'=='Q' goto SecurityMenu
@@ -834,7 +1139,7 @@ echo Checking if script contains Administrative rights...
 		echo ============INVALID INPUT============
 		echo -------------------------------------
 		echo Please select a number from the Tool
-		echo Menu [1-2] or select 'Q' to quit.
+		echo Menu [1-2] or select 'Q' to goto Security Menu.
 		echo -------------------------------------
 		echo ======PRESS ANY KEY TO CONTINUE======
 	
@@ -845,18 +1150,18 @@ echo Checking if script contains Administrative rights...
 	CLS
 	REM Listing possible penetrations
 	IF NOT EXIST "%UserProfile%\Downloads\Data\NUL" mkdir "%UserProfile%\Downloads\Data"
-	cd %UserProfile%\Downloads\Data
+
 	echo "STARTING TO OUTPUT PROCESS FILES DIRECTLY TO THE DOWNLOADS\Data FOLDER!"
-		wmic process list brief > BriefProcesses.txt
+		wmic process list brief > %UserProfile%\Downloads\Data\BriefProcesses.txt
 		if %errorlevel%==1 echo Brief Processes failed to write
 
-		wmic process list full >FullProcesses.txt
+		wmic process list full > %UserProfile%\Downloads\Data\FullProcesses.txt
 		if %errorlevel%==1 echo Full Processes failed to write
 
-		wmic startup list full > StartupLists.txt
+		wmic startup list full > %UserProfile%\Downloads\Data\StartupLists.txt
 		if %errorlevel%==1 echo Startup Processes failed to write
 
-		net start > StartedProcesses.txt
+		net start > %UserProfile%\Downloads\Data\StartedProcesses.txt
 		if %errorlevel%==1 echo Started processes failed to write
 
 		reg export HKLM\Software\Microsoft\Windows\CurrentVersion\Run  Run.reg
@@ -874,6 +1179,8 @@ echo Checking if script contains Administrative rights...
 	Pause
 
 	GOTO ToolMenu
+
+:DisallowedMediaFiles
 
 :ERROR
 	CLS
